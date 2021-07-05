@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken"); // 토큰 모듈 불러오기
+const jwt = require("jsonwebtoken"); // call jwt token module
 const User = require("./models/user");
 const authMiddleware = require("./middlewares/auth-middleware"); // add middleware for arthorisation
 
@@ -17,48 +17,48 @@ const router = express.Router();
 
 // sign up API start
 router.post("/users", async (req, res) => {
-    const { nickname, email, password, confirmPassword } = req.body; // 클라이언트에서 보내는 정보들 받아오기
+    const { nickname, email, password, confirmPassword } = req.body; // getting info from client
 
     // validate passwrod
-    if (password !== confirmPassword) { // 비밀번호 일치해야만 로그인 허용
-        res.status(400).send({ // 틀리면 에러 메세지 400(Bad request) 보낸다.
+    if (password !== confirmPassword) { // allow login if password is correct
+        res.status(400).send({ // if incorrect send 400(Bad request) error message
             errorMessage: '패스워드가 패드워드 확인란과 동일하지 않습니다.', // 
         });
-        return; // 반드시 return을 통해 코드를 끝내줘야 한다.
+        return; // code has to be done by doing return
     }
 
     // validate email and nickname
-    const existUsers = await User.find({ // nickname과 email이 DB에 있는지 확인한다.
+    const existUsers = await User.find({ // check whether nickname and email are in DB
         $or: [{ email }, { nickname }],
     });
-    if (existUsers.length) { // 조건 맞는 것들을 일단 가지고 온다.
-        res.status(400).send({ // 이미 있다면 에러 메세지 보낸다.
+    if (existUsers.length) { // get every info meeting conditions
+        res.status(400).send({ // send error 400 message if already exist
             errorMessage: '이미 가입된 이메일 또는 닉네임이 있습니다.'
         });
-        return; // 에러가 났으면 return 으로써 코드를 끝내준다.
+        return; // finish code if error occurs
     }
 
-    const user = new User({ email, nickname, password }); // 사용자를 DB에 저장한다.
+    const user = new User({ email, nickname, password }); // save user in DB
     await user.save();
 
-    res.status(201).send({}); // 성공했다는 응답값을 보내준다. (REST API 원칙상 created (201) 이 적합)
+    res.status(201).send({}); // send success message, code 201 is suitable based on REST API rules
 });
 // sign up API end
 
 // login  API start
 router.post("/auth", async(req, res) => { // 왜 POST? 입장권(token)을 그때 그때 생산한다. GET으로도 가능하지만 body에 정보를 못 싣고 주소에 치기때문에 보안에 취약
-    const { email, password } = req.body; // email 과 password 입력을 받는다.
+    const { email, password } = req.body; // take email and password
 
     const user = await User.findOne({ email, password }).exec(); // 일치하는 유저가 있는지 찾는다.
 
-    if (!user) { // 일치하는 유저가 없다면,
-        res.status(400).send({ // 에러 메세지를 보낸다.
+    if (!user) { // if no corresponding user,
+        res.status(400).send({ // send an error message
             errorMessage: '이메일 또는 패스워드가 잘못됐습니다.'
         });
-        return; // 에러가 났다면 바로 코드 종료
+        return; // finish code if error occurs
     }
 
-    const token = jwt.sign({ userId: user.userId }, "my-secret-key"); // token 만들기 (sign을 해야된다.)
+    const token = jwt.sign({ userId: user.userId }, "my-secret-key"); // make token (sign must be taken)
     res.send({
         token,
     });
