@@ -58,22 +58,25 @@ router.post("/auth", async(req, res) => { // 왜 POST? 입장권(token)을 그�
         return; // finish code if error occurs
     }
 
-    const token = jwt.sign({ userId: user.userId }, "my-secret-key"); // make token (sign must be taken)
+    const token = jwt.sign({ userId: user.userId }, "my-secret-key"); // make token (sign must be included)
     res.send({
         token,
     });
 });
 // login API end
 
+// authorization middleware start
 router.get("/users/me", authMiddleware, async(req, res) => { // authMiddleware 반드시 붙여줘야한다. 안그러면 res.locals 에 아무 정보도 담기지 않게 된다.
-    const { user } = res.locals; // destructing (구조분해할당)
-    res.send({
+    const { user } = res.locals; // destructing (구조분해할당) >> res.locals 속의 key 값이 user에 들어간다.
+    res.send({ // 필요한 정보만 골라서 client에 보내준다.
+        // user => 그냥 이렇게 해도 되긴 되자만 자세히 적어주는게 best
         user: {
             email: user.email,
             nickname: user.nickname,
         } // 클라이언트에서 알아서 email 과 nickname 만 골라 가져간다. 하지만 password 노출을 피하려면 email, nickname 만 골라서 클라이언트로 넘겨준다.
     });
 });
+// authorization middleware end
 
 app.use("/api", express.urlencoded({ extended: false }), router);
 app.use(express.static("assets")); // 프론트앤드 파일 불러오기
