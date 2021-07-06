@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken"); // add jwt token module
-const User = require("./models/user");
+const User = require("./models/user"); // user model을 참조
 const authMiddleware = require("./middlewares/auth-middleware"); // add middleware for arthorisation
 
 // connect mongodb
@@ -15,9 +15,9 @@ db.on("error", console.error.bind(console, "connection error:"));
 const app = express();
 const router = express.Router();
 
-// sign up API start
+// sign up API start : DB에 사용자 정보를 추가한다는 뜻과 동일
 router.post("/users", async (req, res) => {
-    const { nickname, email, password, confirmPassword } = req.body; // getting info from client
+    const { nickname, email, password, confirmPassword } = req.body; // get info from client
 
     // validate passwrod
     if (password !== confirmPassword) { // allow login if password is correct
@@ -28,7 +28,7 @@ router.post("/users", async (req, res) => {
     }
 
     // validate email and nickname
-    const existUsers = await User.find({ // check whether nickname and email are in DB
+    const existUsers = await User.find({ // check whether nickname and email exist in DB and bring duplicated data from DB
         $or: [{ email }, { nickname }],
     });
     if (existUsers.length) { // get every info meeting conditions
@@ -41,7 +41,7 @@ router.post("/users", async (req, res) => {
     const user = new User({ email, nickname, password }); // save user in DB
     await user.save();
 
-    res.status(201).send({}); // send success message, code 201 is suitable based on REST API rules
+    res.status(201).send({}); // send success response message, code (201 means created) is suitable based on REST API rules (ref MDN docs)
 });
 // sign up API end
 
@@ -49,9 +49,9 @@ router.post("/users", async (req, res) => {
 router.post("/auth", async(req, res) => { // 왜 POST? 입장권(token)을 그때 그때 생산한다. GET으로도 가능하지만 body에 정보를 못 싣고 주소에 치기때문에 보안에 취약
     const { email, password } = req.body; // take email and password
 
-    const user = await User.findOne({ email, password }).exec(); // 일치하는 유저가 있는지 찾는다.
+    const user = await User.findOne({ email, password }).exec(); // find whether there's corresponding users in DB
 
-    if (!user) { // if no corresponding user,
+    if (!user) { // if no corresponding users,
         res.status(400).send({ // send an error message
             errorMessage: '이메일 또는 패스워드가 잘못됐습니다.'
         });
@@ -76,7 +76,7 @@ router.get("/users/me", authMiddleware, async(req, res) => { // authMiddleware �
 });
 
 app.use("/api", express.urlencoded({ extended: false }), router);
-app.use(express.static("assets"));
+app.use(express.static("assets")); // 프론트앤드 파일 불러오기
 
 app.listen(8080, () => {
     console.log("서버가 요청을 받을 준비가 됐어요");
